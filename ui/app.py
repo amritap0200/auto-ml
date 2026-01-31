@@ -45,10 +45,12 @@ if uploaded_file is not None:
 
             st.subheader("ONNX Conversion Status")
 
-            if result.get("onnx_exported"):
-                st.success("ONNX export successful")
+            if result.get("onnx_export"):
+                st.success("✅ ONNX export successful")
             else:
-                st.warning("ONNX export failed")
+                st.warning("❌ ONNX export failed")
+                if result.get("onnx_message"):
+                    st.code(result["onnx_message"])
         else:
             st.error("Failed to process model")
 
