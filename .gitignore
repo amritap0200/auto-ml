@@ -4,7 +4,7 @@ venv311/
 .env/
 .env311/
 
-# Python git rebase origin/main
+# Python
 
 __pycache__/
 *.pyc
