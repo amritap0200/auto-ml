@@ -16,6 +16,8 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.metrics import measure_latency, get_cpu_memory_mb, get_gpu_util
 
+df = pd.DataFrame(profile_results)
+
 
 MCP_SERVER_URL = "http://localhost:8000"
 
@@ -411,6 +413,49 @@ def render_results_section():
     # Detailed table
     st.subheader("Detailed Configuration Results")
     render_results_table(valid_configs)
+    
+    # Simple latency comparison chart
+    st.subheader("Latency Comparison")
+    latency_df = pd.DataFrame([
+        {"runtime": c.get('runtime', 'unknown'), "latency_ms": c.get('latency_mean', 0)}
+        for c in valid_configs
+    ])
+    if not latency_df.empty:
+        st.bar_chart(latency_df, x="runtime", y="latency_ms")
+    
+    # Batch size vs latency
+    st.subheader("Batch Size vs Latency")
+    batch_df = pd.DataFrame([
+        {"batch": c.get('batch_size', 0), "latency_ms": c.get('latency_mean', 0)}
+        for c in valid_configs
+    ])
+    if not batch_df.empty:
+        st.line_chart(batch_df, x="batch", y="latency_ms")
+    
+    # Memory usage
+    st.subheader("Memory Usage (MB)")
+    memory_df = pd.DataFrame([
+        {"precision": c.get('precision', 'unknown'), "memory_mb": c.get('memory_mean', 0)}
+        for c in valid_configs
+    ])
+    if not memory_df.empty:
+        st.bar_chart(memory_df, x="precision", y="memory_mb")
+    
+    # Human readable bottleneck analysis
+    st.subheader("Bottleneck Analysis")
+    if st.session_state.recommendations and 'details' in st.session_state.recommendations:
+        bottleneck_results = st.session_state.recommendations['details']
+        for item in bottleneck_results:
+            st.markdown(
+                f"""
+                **Runtime:** {item.get('runtime', 'N/A')}  
+                **Precision:** {item.get('precision', 'N/A')}  
+                **Batch:** {item.get('batch', 'N/A')}  
+                **Issues:** {', '.join(item.get('issues', []))}
+                """
+            )
+    else:
+        st.info("No bottleneck analysis available")
 
 def render_latency_chart(configs):
     """Render latency comparison chart"""

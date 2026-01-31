@@ -78,3 +78,57 @@ def analyze_bottleneck(profile_results):
         "reason": "Model performs within expected parameters",
         "confidence": 0.60
     }]
+
+
+def analyze_bottlenecks(profile_results):
+    """
+    Provides per-run bottleneck insights for each profiling configuration.
+
+    Args:
+        profile_results: list of dicts containing:
+            - runtime
+            - precision
+            - batch
+            - latency_ms
+            - memory_mb
+            - gpu_util
+            - fp32_latency (optional)
+
+    Returns:
+        list of dicts with human-readable issues per configuration
+    """
+    insights = []
+
+    for r in profile_results:
+        issues = []
+
+        # 1️⃣ GPU underutilization
+        if r.get("gpu_util") is not None and r["gpu_util"] < 40:
+            issues.append("GPU underutilized (consider increasing batch size)")
+
+        # 2️⃣ High latency warning
+        if r.get("latency_ms") is not None and r["latency_ms"] > 50:
+            issues.append("High inference latency")
+
+        # 3️⃣ Memory pressure
+        if r.get("memory_mb") is not None and r["memory_mb"] > 800:
+            issues.append("High memory usage")
+
+        # 4️⃣ FP16 effectiveness
+        if (
+            r.get("precision") == "FP16"
+            and r.get("fp32_latency") is not None
+            and r["latency_ms"] < 0.9 * r["fp32_latency"]
+        ):
+            issues.append("FP16 provides noticeable speedup")
+
+        insight = {
+            "runtime": r.get("runtime"),
+            "precision": r.get("precision"),
+            "batch": r.get("batch"),
+            "issues": issues if issues else ["No major bottleneck detected"]
+        }
+
+        insights.append(insight)
+
+    return insights

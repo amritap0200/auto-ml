@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Form
 from mcp_server.context import create_model_context
-from mcp_server.analyzer import analyze_bottleneck
+from mcp_server.analyzer import analyze_bottleneck, analyze_bottlenecks
 
 import uuid
 import json
@@ -59,9 +59,17 @@ async def get_recommendations(job_id: str):
     if not results:
         return {"error": "No results available"}, 404
     
-    findings = analyze_bottleneck(results)
+    summary = analyze_bottleneck(results)
+    details = analyze_bottlenecks(results)
     return {
         "job_id": job_id,
-        "findings": findings,
+        "summary": summary,
+        "details": details,
         "analysis_timestamp": str(uuid.uuid1())
     }
+
+
+@app.post("/analyze")
+async def analyze(profile_results: list):
+    """Direct analysis endpoint for profiling results"""
+    return analyze_bottlenecks(profile_results)
