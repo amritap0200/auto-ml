@@ -2,7 +2,7 @@ import torch
 import os
 import uuid
 
-from converter import (
+from mcp_server.converter import (
     export_to_onnx,
     validate_onnx,
     get_onnx_session
@@ -18,7 +18,12 @@ def create_model_context(file, input_shape):
     # 1️⃣ Save uploaded model
     with open(model_path, "wb") as f:
         f.write(file.file.read())
-
+    
+    model = torch.load(
+        model_path,
+        map_location="cpu",
+        weights_only=False
+    )
     model.eval()
 
     # 3️⃣ Extract metadata
